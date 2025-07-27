@@ -1,27 +1,40 @@
-# config.py 自定义配置,包括阅读次数、推送token的填写
+# config.py - 配置文件
+# 功能：存储脚本运行所需的各种配置参数，包括阅读次数、推送设置、请求头和cookies等
+# 作者：findmover
+# 版本：5.0
+
 import os
 import re
 
 """
 可修改区域
 默认使用本地值如果不存在从环境变量中获取值
+这样设计便于在不同环境（本地、Docker、GitHub Actions）中灵活配置
 """
 
-# 阅读次数 默认40次/20分钟
+# 阅读次数 默认40次/20分钟，每次阅读约30秒
 READ_NUM = int(os.getenv('READ_NUM') or 40)
+
+# 推送相关配置
 # 需要推送时可选，可选pushplus、wxpusher、telegram
 PUSH_METHOD = "" or os.getenv('PUSH_METHOD')
-# pushplus推送时需填
+
+# pushplus推送时需填写的token
 PUSHPLUS_TOKEN = "" or os.getenv("PUSHPLUS_TOKEN")
-# telegram推送时需填
+
+# telegram推送时需填写的bot token和chat id
 TELEGRAM_BOT_TOKEN = "" or os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = "" or os.getenv("TELEGRAM_CHAT_ID")
-# wxpusher推送时需填
+
+# wxpusher推送时需填写的token
 WXPUSHER_SPT = "" or os.getenv("WXPUSHER_SPT")
+
 # read接口的bash命令，本地部署时可对应替换headers、cookies
+# 从环境变量获取curl命令，用于提取headers和cookies
 curl_str = os.getenv('WXREAD_CURL_BASH')
 
 # headers、cookies是一个省略模版，本地或者docker部署时对应替换
+# 这些是默认的cookies，如果提供了curl_str，将被覆盖
 cookies = {
     'RK': 'oxEY1bTnXf',
     'ptcz': '53e3b35a9486dd63c4d06430b05aa169402117fc407dc5cc9329b41e59f62e2b',
@@ -32,6 +45,7 @@ cookies = {
     'wr_gender': '0',
 }
 
+# 默认请求头，如果提供了curl_str，将被覆盖
 headers = {
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6,ko;q=0.5',
@@ -40,14 +54,16 @@ headers = {
 }
 
 
-# 书籍
+# 书籍ID列表，随机选择一本书进行阅读
+# 这些ID是通过抓包获取的，代表不同的书籍
 book = [
     "36d322f07186022636daa5e","6f932ec05dd9eb6f96f14b9","43f3229071984b9343f04a4","d7732ea0813ab7d58g0184b8",
     "3d03298058a9443d052d409","4fc328a0729350754fc56d4","a743220058a92aa746632c0","140329d0716ce81f140468e",
     "1d9321c0718ff5e11d9afe8","ff132750727dc0f6ff1f7b5","e8532a40719c4eb7e851cbe","9b13257072562b5c9b1c8d6"
 ]
 
-# 章节
+# 章节ID列表，随机选择一个章节进行阅读
+# 这些ID是通过抓包获取的，代表不同的章节
 chapter = [
     "ecc32f3013eccbc87e4b62e","a87322c014a87ff679a21ea","e4d32d5015e4da3b7fbb1fa","16732dc0161679091c5aeb1",
     "8f132430178f14e45fce0f7","c9f326d018c9f0f895fb5e4","45c322601945c48cce2e120","d3d322001ad3d9446802347",
@@ -57,29 +73,37 @@ chapter = [
 
 """
 建议保留区域|默认读三体，其它书籍自行测试时间是否增加
+这部分包含了请求所需的基本参数，通过逆向分析获得
 """
 data = {
-    "appId": "wb182564874603h266381671",
-    "b": "ce032b305a9bc1ce0b0dd2a",
-    "c": "7f632b502707f6ffaa6bf2e",
-    "ci": 27,
-    "co": 389,
-    "sm": "19聚会《三体》网友的聚会地点是一处僻静",
-    "pr": 74,
-    "rt": 15,
-    "ts": 1744264311434,
-    "rn": 466,
-    "sg": "2b2ec618394b99deea35104168b86381da9f8946d4bc234e062fa320155409fb",
-    "ct": 1744264311,
-    "ps": "4ee326507a65a465g015fae",
-    "pc": "aab32e207a65a466g010615",
-    "s": "36cc0815"
+    "appId": "wb182564874603h266381671",  # 应用ID
+    "b": "ce032b305a9bc1ce0b0dd2a",       # 书籍ID，会被随机替换
+    "c": "7f632b502707f6ffaa6bf2e",       # 章节ID，会被随机替换
+    "ci": 27,                             # 章节索引
+    "co": 389,                            # 内容位置
+    "sm": "19聚会《三体》网友的聚会地点是一处僻静",  # 内容摘要
+    "pr": 74,                             # 页码或进度
+    "rt": 15,                             # 阅读时长
+    "ts": 1744264311434,                  # 时间戳（毫秒）
+    "rn": 466,                            # 随机数
+    "sg": "2b2ec618394b99deea35104168b86381da9f8946d4bc234e062fa320155409fb",  # 安全签名
+    "ct": 1744264311,                     # 时间戳（秒）
+    "ps": "4ee326507a65a465g015fae",      # 用户标识
+    "pc": "aab32e207a65a466g010615",      # 设备标识
+    "s": "36cc0815"                       # 校验和
 }
 
 
 def convert(curl_command):
-    """提取bash接口中的headers与cookies
+    """
+    提取bash接口中的headers与cookies
     支持 -H 'Cookie: xxx' 和 -b 'xxx' 两种方式的cookie提取
+    
+    参数:
+        curl_command: curl命令字符串
+    返回:
+        headers: 提取的请求头字典
+        cookies: 提取的cookies字典
     """
     # 提取 headers
     headers_temp = {}
@@ -111,4 +135,5 @@ def convert(curl_command):
     return headers, cookies
 
 
+# 如果提供了curl命令，则从中提取headers和cookies，否则使用默认值
 headers, cookies = convert(curl_str) if curl_str else (headers, cookies)

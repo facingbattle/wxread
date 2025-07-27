@@ -1,15 +1,22 @@
+# Dockerfile - Docker容器配置文件
+# 功能：定义Docker镜像构建过程，用于在容器中运行微信读书自动阅读脚本
+# 作者：findmover
+# 版本：5.0
+
+# 使用Python 3.10精简版作为基础镜像
 FROM python:3.10-slim
 
 # 设置工作目录
 WORKDIR /app
 
-# 设置时区为中国时区
+# 设置时区为中国时区，确保日志时间正确
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 安装 cron
+# 安装 cron 定时任务工具
+# 更新apt源并安装cron，安装完成后清理apt缓存减小镜像体积
 RUN apt-get update && apt-get install -y cron && rm -rf /var/lib/apt/lists/*
-ENV PATH="/usr/local/bin:${PATH}"
+ENV PATH="/usr/local/bin:${PATH}"  # 确保Python
 
 # 复制项目文件
 COPY main.py push.py config.py ./

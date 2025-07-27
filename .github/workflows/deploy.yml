@@ -1,7 +1,13 @@
-name: wxread
+# deploy.yml - GitHub Actions工作流配置文件
+# 功能：定义自动化工作流，定时或手动触发微信读书自动阅读脚本
+# 作者：findmover
+# 版本：5.0
+
+name: wxread  # 工作流名称
 
 on:
   schedule:
+    # 定时触发配置
     # 凌晨任务：北京时间每天 01:00（UTC 前一天 17:00）
     - cron: '0 17 * * *'
     # 早间任务：北京时间每天 05:00（UTC 前一天 21:00）
@@ -10,42 +16,47 @@ on:
     #- cron: '40 3 * * *'
     # 晚间任务：北京时间每天 22:00（UTC 14:00）
     #- cron: '0 14 * * *'
-  workflow_dispatch:  # 手动触发
+  workflow_dispatch:  # 允许手动触发工作流
 
 jobs:
   deploy:
-    runs-on: ubuntu-22.04
-    environment: AutoRead  # 指定环境
+    runs-on: ubuntu-22.04  # 指定运行环境
+    environment: AutoRead  # 指定GitHub环境，用于存储敏感信息
 
     steps:
-
+    # 设置DNS为Google的DNS服务器，避免DNS解析问题
     - name: Set DNS to Google's DNS
       run: |
         echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
         echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf
 
+    # 检出代码仓库
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    # 设置Python环境
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: '3.10'  # 指定Python版本
 
+    # 安装依赖包
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install certifi==2024.8.30 charset-normalizer==3.4.0 idna==3.10 requests==2.32.3 urllib3==2.2.3
 
+    # 运行脚本
     - name: Run deployment script
       env:
-        WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}
-        PUSH_METHOD: ${{ secrets.PUSH_METHOD }}
-        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        WXPUSHER_SPT: ${{ secrets.WXPUSHER_SPT }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        READ_NUM: ${{ vars.READ_NUM }}  # 使用 Repository Variables
+        # 设置环境变量，从GitHub Secrets和Variables获取
+        WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}  # 微信读书curl命令
+        PUSH_METHOD: ${{ secrets.PUSH_METHOD }}  # 推送方式
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}  # PushPlus token
+        WXPUSHER_SPT: ${{ secrets.WXPUSHER_SPT }}  # WxPusher token
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Telegram bot token
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Telegram chat ID
+        READ_NUM: ${{ vars.READ_NUM }}  # 阅读次数，使用Repository Variables
 
       run: |
-        python main.py
+        python main.py  # 执行主脚本
