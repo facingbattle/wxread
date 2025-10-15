@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)-8s - 
 
 # 关键常量定义
 KEY = "3c5c8717f3daf09iop3423zafeqoi"  # 用于生成安全签名的密钥，通过逆向JS获得
-# COOKIE_DATA = {"rq": "%2Fweb%2Fbook%2Fread"}  # 刷新cookie时的请求数据
-COOKIE_DATA = {"rq": "%2Fweb%2Fbook%2Fread","ql": True}
+COOKIE_DATA = {"rq": "%2Fweb%2Fbook%2Fread"}  # 刷新cookie时的请求数据
+# COOKIE_DATA = {"rq": "%2Fweb%2Fbook%2Fread","ql": True}
 READ_URL = "https://weread.qq.com/web/book/read"  # 微信读书阅读接口URL
 RENEW_URL = "https://weread.qq.com/web/login/renewal"  # 刷新token的URL
 FIX_SYNCKEY_URL = "https://weread.qq.com/web/book/chapterInfos"  # 修复synckey的URL
