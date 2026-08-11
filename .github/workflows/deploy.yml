@@ -5,6 +5,10 @@
 
 name: wxread  # 工作流名称
 
+concurrency:
+  group: ${{ github.workflow }} # 使用工作流名称作为并发组的key
+  cancel-in-progress: true    # 取消任何正在进行的相同并发组的工作流
+
 on:
   schedule:
     # 定时触发配置
@@ -49,23 +53,24 @@ jobs:
     # 运行脚本
     - name: Run deployment script
       env:
-        # 设置环境变量，从GitHub Secrets和Variables获取
-        WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}  # 微信读书curl命令
-        PUSH_METHOD: ${{ secrets.PUSH_METHOD }}  # 推送方式
-        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}  # PushPlus token
-        WXPUSHER_SPT: ${{ secrets.WXPUSHER_SPT }}  # WxPusher token
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Telegram bot token
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Telegram chat ID
-        READ_NUM: ${{ vars.READ_NUM }}  # 阅读次数，使用Repository Variables
+        WXREAD_CURL_BASH: ${{ secrets.WXREAD_CURL_BASH }}
+        PUSH_METHOD: ${{ secrets.PUSH_METHOD }}
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        WXPUSHER_SPT: ${{ secrets.WXPUSHER_SPT }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        SERVERCHAN_SPT:  ${{ secrets.SERVERCHAN_SPT }}
+        READ_NUM: ${{ vars.READ_NUM }}  # 使用 Repository Variables
 
       run: |
-        python main.py  # 执行主脚本
+        python main.py
 
-    - name: Update run log
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        echo "Last run: $(date '+%Y-%m-%d %H:%M:%S UTC')" > .github/last_run.txt
-        git add .github/last_run.txt
-        git commit -m "chore: update last run time [skip ci]"
-        git push
+  keepalive-job:
+    name: Keepalive Workflow
+    if: ${{ always() }}
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: liskin/gh-workflow-keepalive@v1.2.1
